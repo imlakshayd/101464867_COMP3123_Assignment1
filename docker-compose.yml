@@ -5,6 +5,8 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=user
       - MONGO_INITDB_ROOT_PASSWORD=pass
+    ports:
+      - 27018:27017
     volumes:
       - mongo_data_comp3123_assignment1:/data/db
     networks:
