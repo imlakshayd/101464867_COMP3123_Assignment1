@@ -2,17 +2,43 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 const generateToken = require('../utils/generateToken');
+const { body, validationResult } = require('express-validator');
 
+// Validation middleware for signup
+const validateSignup = [
+    body('username').trim().notEmpty().withMessage('Username is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+];
 
+// Validation middleware for login
+const validateLogin = [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required')
+];
 
-// Create a new user
-router.post('/register', async (req, res) => {
+// POST /api/v1/user/signup - Create a new user
+router.post('/signup', validateSignup, async (req, res) => {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+            status: false, 
+            message: 'Validation failed', 
+            errors: errors.array() 
+        });
+    }
+
     try {
         const { username, email, password } = req.body;
 
-        const existingUser = await User.findOne({ email });
+        // Check if user already exists
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         if (existingUser) {
-            return res.status(400).json({ message: 'Email already in use' });
+            return res.status(400).json({ 
+                status: false, 
+                message: 'Email or username already in use' 
+            });
         }
 
         // Create and save the new user
@@ -20,17 +46,29 @@ router.post('/register', async (req, res) => {
         await newUser.save();
 
         res.status(201).json({
-            _id: newUser._id,
-            username: newUser.username,
-            email: newUser.email,
-            token: generateToken(newUser._id)
+            message: 'User created successfully.',
+            user_id: newUser._id
         });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ 
+            status: false, 
+            message: 'Error creating user', 
+            error: err.message 
+        });
     }
 });
 
-router.post('/login', async (req, res) => {
+// POST /api/v1/user/login - User login
+router.post('/login', validateLogin, async (req, res) => {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+            status: false, 
+            message: 'Validation failed', 
+            errors: errors.array() 
+        });
+    }
 
     const { email, password } = req.body;
     
@@ -38,19 +76,23 @@ router.post('/login', async (req, res) => {
         const user = await User.findOne({ email });
 
         if (user && await user.comparePassword(password)) {
-            res.json({
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                token: generateToken(user._id) // Generate a JWT token for the user
+            res.status(200).json({
+                message: 'Login successful.',
+                jwt_token: generateToken(user._id) // Optional JWT implementation
             });
         } else {
-            res.status(401).json({ message: 'Invalid email or password' });
+            res.status(401).json({ 
+                status: false, 
+                message: 'Invalid email or password' 
+            });
         }
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ 
+            status: false, 
+            message: 'Error during login', 
+            error: err.message 
+        });
     } 
 });
 
 module.exports = router;
-
