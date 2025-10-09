@@ -27,7 +27,7 @@ const validateEmployeeUpdate = [
 // GET /api/v1/emp/employees - Get all employees
 router.get('/employees', async (req, res) => {
     try {
-        const employees = await Employee.find():
+        const employees = await Employee.find();
         res.status(200).json(employees);
     } catch (err) {
         res.status(500).json({
