@@ -1,15 +1,23 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
+const connectDB = require('./config/db');
+const userRoutes = require('./routes/userRoutes');  
+
+connectDB(); // Connect to the database
+
 const app = express();
-const port = 8000;
 
-
+app.use(express.json()); // Middleware to parse JSON request bodies
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+    res.send('API is running...');
+});
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+app.use('/api/users', userRoutes); // Use user routes for any endpoint starting with /api/users
+
+const PORT = process.env.PORT || 8000;
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
