@@ -1,201 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const Employee = require('../models/employee');
-const { body, validationResult } = require('express-validator');
+const {
+    getAllEmployees,
+    createEmployee,
+    getEmployeeById,
+    updateEmployee,
+    deleteEmployee
+} = require('../controllers/employeeController');
+const {
+    validateEmployee,
+    validateEmployeeUpdate,
+    validateEmployeeId,
+    validateEmployeeQuery
+} = require('../middleware/validation');
 
-// Validation middleware for employee data
-const validateEmployee = [
-    body('first_name').trim().notEmpty().withMessage('First name is required'),
-    body('last_name').trim().notEmpty().withMessage('Last name is required'),
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('position').trim().notEmpty().withMessage('Position is required'),
-    body('salary').isNumeric().withMessage('Salary must be a number').custom(value => value >= 0).withMessage('Salary cannot be negative'),
-    body('date_of_joining').optional().isISO8601().withMessage('Valid date is required'),
-    body('department').trim().notEmpty().withMessage('Department is required')
-];
+const { protect } = require('../middleware/authentication'); 
 
-const validateEmployeeUpdate = [
-   body('first_name').optional().trim().notEmpty().withMessage('First name cannot be empty'),
-    body('last_name').optional().trim().notEmpty().withMessage('Last name cannot be empty'),
-    body('email').optional().isEmail().withMessage('Valid email is required'),
-    body('position').optional().trim().notEmpty().withMessage('Position cannot be empty'),
-    body('salary').optional().isNumeric().withMessage('Salary must be a number').custom(value => value >= 0).withMessage('Salary cannot be negative'),
-    body('date_of_joining').optional().isISO8601().withMessage('Valid date is required'),
-    body('department').optional().trim().notEmpty().withMessage('Department cannot be empty')
-];
+// @route   GET /api/v1/emp/employees
+// @desc    Get all employees
+// @access  Public (add 'protect' middleware to make it protected)
+router.get('/employees', protect, getAllEmployees);
 
-// GET /api/v1/emp/employees - Get all employees
-router.get('/employees', async (req, res) => {
-    try {
-        const employees = await Employee.find();
-        res.status(200).json(employees);
-    } catch (err) {
-        res.status(500).json({
-            status: false,
-            message: 'Error fetching employees',
-            error: err.message
-        });
-    
-    }
-});
-// POST /api/v1/emp/employees - Create new employee
-router.post('/employees', validateEmployee, async (req, res) => {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-            status: false, 
-            message: 'Validation failed', 
-            errors: errors.array() 
-        });
-    }
+// @route   POST /api/v1/emp/employees
+// @desc    Create new employee
+// @access  Public (add 'protect' middleware to make it protected)
+router.post('/employees', protect, validateEmployee, createEmployee);
 
-    try {
-        const { first_name, last_name, email, position, salary, date_of_joining, department } = req.body;
+// @route   GET /api/v1/emp/employees/:eid
+// @desc    Get employee by ID
+// @access  Public (add 'protect' middleware to make it protected)
+router.get('/employees/:eid', protect, validateEmployeeId, getEmployeeById);
 
-        // Check if employee with email already exists
-        const existingEmployee = await Employee.findOne({ email });
-        if (existingEmployee) {
-            return res.status(400).json({ 
-                status: false, 
-                message: 'Employee with this email already exists' 
-            });
-        }
+// @route   PUT /api/v1/emp/employees/:eid
+// @desc    Update employee
+// @access  Public (add 'protect' middleware to make it protected)
+router.put('/employees/:eid', protect, [validateEmployeeId, ...validateEmployeeUpdate], updateEmployee);
 
-        // Create new employee
-        const newEmployee = new Employee({
-            first_name,
-            last_name,
-            email,
-            position,
-            salary,
-            date_of_joining: date_of_joining || Date.now(),
-            department
-        });
-
-        await newEmployee.save();
-
-        res.status(201).json({
-            message: 'Employee created successfully.',
-            employee_id: newEmployee._id
-        });
-    } catch (err) {
-        res.status(500).json({ 
-            status: false, 
-            message: 'Error creating employee', 
-            error: err.message 
-        });
-    }
-});
-
-// GET /api/v1/emp/employees/:eid - Get employee by ID
-router.get('/employees/:eid', [
-    param('eid').isMongoId().withMessage('Invalid employee ID')
-], async (req, res) => {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-            status: false, 
-            message: 'Validation failed', 
-            errors: errors.array() 
-        });
-    }
-
-    try {
-        const employee = await Employee.findById(req.params.eid);
-        
-        if (!employee) {
-            return res.status(404).json({ 
-                status: false, 
-                message: 'Employee not found' 
-            });
-        }
-
-        res.status(200).json(employee);
-    } catch (err) {
-        res.status(500).json({ 
-            status: false, 
-            message: 'Error fetching employee', 
-            error: err.message 
-        });
-    }
-});
-
-// PUT /api/v1/emp/employees/:eid - Update employee
-router.put('/employees/:eid', [
-    param('eid').isMongoId().withMessage('Invalid employee ID'),
-    ...validateEmployeeUpdate
-], async (req, res) => {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-            status: false, 
-            message: 'Validation failed', 
-            errors: errors.array() 
-        });
-    }
-
-    try {
-        const updatedEmployee = await Employee.findByIdAndUpdate(
-            req.params.eid,
-            req.body,
-            { new: true, runValidators: true }
-        );
-
-        if (!updatedEmployee) {
-            return res.status(404).json({ 
-                status: false, 
-                message: 'Employee not found' 
-            });
-        }
-
-        res.status(200).json({
-            message: 'Employee details updated successfully.',
-            employee: updatedEmployee
-        });
-    } catch (err) {
-        res.status(500).json({ 
-            status: false, 
-            message: 'Error updating employee', 
-            error: err.message 
-        });
-    }
-});
-
-// DELETE /api/v1/emp/employees?eid=xxx - Delete employee
-router.delete('/employees', [
-    query('eid').isMongoId().withMessage('Invalid employee ID')
-], async (req, res) => {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-            status: false, 
-            message: 'Validation failed', 
-            errors: errors.array() 
-        });
-    }
-
-    try {
-        const deletedEmployee = await Employee.findByIdAndDelete(req.query.eid);
-
-        if (!deletedEmployee) {
-            return res.status(404).json({ 
-                status: false, 
-                message: 'Employee not found' 
-            });
-        }
-
-        res.status(204).send(); // No content response
-    } catch (err) {
-        res.status(500).json({ 
-            status: false, 
-            message: 'Error deleting employee', 
-            error: err.message 
-        });
-    }
-});
+// @route   DELETE /api/v1/emp/employees?eid=xxx
+// @desc    Delete employee
+// @access  Public (add 'protect' middleware to make it protected)
+router.delete('/employees', protect, validateEmployeeQuery, deleteEmployee);
 
 module.exports = router;

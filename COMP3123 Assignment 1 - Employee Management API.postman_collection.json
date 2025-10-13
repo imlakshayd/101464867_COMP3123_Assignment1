@@ -1,0 +1,926 @@
+{
+	"info": {
+		"_postman_id": "ea4897ec-dfcd-47d3-8a73-38cc27a6e61b",
+		"name": "COMP3123 Assignment 1 - Employee Management API",
+		"description": "Complete API collection for testing User and Employee Management endpoints with JWT authentication",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48761144",
+		"_collection_link": "https://imlakshayd-3446690.postman.co/workspace/COMP3123~9ae6cfb0-a127-4c60-adbe-3ce9266fb762/collection/48761144-ea4897ec-dfcd-47d3-8a73-38cc27a6e61b?action=share&source=collection_link&creator=48761144"
+	},
+	"item": [
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "1. User Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has user_id\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('user_id');",
+									"});",
+									"",
+									"pm.test(\"Response has success message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql('User created successfully.');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"johndoe@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/user/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"user",
+								"signup"
+							]
+						},
+						"description": "Register a new user account. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "2. User Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has JWT token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('jwt_token');",
+									"    ",
+									"    // Save token to environment variable for subsequent requests",
+									"    pm.environment.set(\"jwt_token\", jsonData.jwt_token);",
+									"});",
+									"",
+									"pm.test(\"Login successful message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql('Login successful.');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"identifier\": \"johndoe@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/user/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"user",
+								"login"
+							]
+						},
+						"description": "Authenticate user and receive JWT token. Use email or username as identifier."
+					},
+					"response": []
+				},
+				{
+					"name": "2b. User Login (Invalid Credentials)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Error message returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.status).to.eql(false);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"identifier\": \"johndoe@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/user/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"user",
+								"login"
+							]
+						},
+						"description": "Test login with invalid credentials - should return 401."
+					},
+					"response": []
+				}
+			],
+			"description": "User authentication endpoints - Signup and Login"
+		},
+		{
+			"name": "Employee Management",
+			"item": [
+				{
+					"name": "3. Get All Employees",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Employees have required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(jsonData[0]).to.have.property('employee_id');",
+									"        pm.expect(jsonData[0]).to.have.property('first_name');",
+									"        pm.expect(jsonData[0]).to.have.property('email');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/emp/employees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees"
+							]
+						},
+						"description": "Retrieve all employees. Requires JWT authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "3b. Get All Employees (No Auth)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Returns authorization error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(false);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/emp/employees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees"
+							]
+						},
+						"description": "Test accessing employees without authentication - should return 401."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Create New Employee",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has employee_id\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('employee_id');",
+									"    ",
+									"    // Save employee_id for subsequent tests",
+									"    pm.environment.set(\"employee_id\", jsonData.employee_id);",
+									"});",
+									"",
+									"pm.test(\"Success message returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql('Employee created successfully.');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"Alice\",\n  \"last_name\": \"Johnson\",\n  \"email\": \"alice.johnson@example.com\",\n  \"position\": \"Designer\",\n  \"salary\": 85000,\n  \"date_of_joining\": \"2023-08-10T00:00:00.000Z\",\n  \"department\": \"Design\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/emp/employees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees"
+							]
+						},
+						"description": "Create a new employee record. Requires JWT authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "4b. Create Employee (Duplicate Email)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message for duplicate email\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(false);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"Bob\",\n  \"last_name\": \"Smith\",\n  \"email\": \"alice.johnson@example.com\",\n  \"position\": \"Developer\",\n  \"salary\": 90000,\n  \"date_of_joining\": \"2023-09-01T00:00:00.000Z\",\n  \"department\": \"Engineering\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/emp/employees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees"
+							]
+						},
+						"description": "Test creating employee with duplicate email - should return 400."
+					},
+					"response": []
+				},
+				{
+					"name": "5. Get Employee by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has all employee fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('employee_id');",
+									"    pm.expect(jsonData).to.have.property('first_name');",
+									"    pm.expect(jsonData).to.have.property('last_name');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData).to.have.property('position');",
+									"    pm.expect(jsonData).to.have.property('salary');",
+									"    pm.expect(jsonData).to.have.property('department');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/emp/employees/{{employee_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees",
+								"{{employee_id}}"
+							]
+						},
+						"description": "Get a specific employee by ID. Uses the employee_id saved from creation."
+					},
+					"response": []
+				},
+				{
+					"name": "5b. Get Employee by Invalid ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 404\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+									"});",
+									"",
+									"pm.test(\"Error response returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(false);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/emp/employees/invalidid123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees",
+								"invalidid123"
+							]
+						},
+						"description": "Test getting employee with invalid ID format."
+					},
+					"response": []
+				},
+				{
+					"name": "6. Update Employee",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has updated employee data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('employee');",
+									"    pm.expect(jsonData.message).to.eql('Employee updated successfully.');",
+									"});",
+									"",
+									"pm.test(\"Employee position was updated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.employee.position).to.eql('Senior Designer');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"position\": \"Senior Designer\",\n  \"salary\": 95000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/emp/employees/{{employee_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees",
+								"{{employee_id}}"
+							]
+						},
+						"description": "Update employee details. Supports partial updates."
+					},
+					"response": []
+				},
+				{
+					"name": "6b. Update Employee (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Validation error returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(false);",
+									"    pm.expect(jsonData).to.have.property('errors');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"salary\": -5000,\n  \"email\": \"invalid-email\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/emp/employees/{{employee_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees",
+								"{{employee_id}}"
+							]
+						},
+						"description": "Test updating employee with invalid data - negative salary and invalid email."
+					},
+					"response": []
+				},
+				{
+					"name": "7. Delete Employee",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204 or 200\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Success message returned\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.message).to.eql('Employee deleted successfully.');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/emp/employees?eid={{employee_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees"
+							],
+							"query": [
+								{
+									"key": "eid",
+									"value": "{{employee_id}}"
+								}
+							]
+						},
+						"description": "Delete an employee by ID using query parameter."
+					},
+					"response": []
+				},
+				{
+					"name": "7b. Delete Employee (Already Deleted)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Employee not found message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(false);",
+									"    pm.expect(jsonData.message).to.include('not found');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/emp/employees?eid={{employee_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees"
+							],
+							"query": [
+								{
+									"key": "eid",
+									"value": "{{employee_id}}"
+								}
+							]
+						},
+						"description": "Test deleting an already deleted employee - should return 404."
+					},
+					"response": []
+				}
+			],
+			"description": "Employee CRUD operations - all require JWT authentication",
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt_token}}",
+						"type": "string"
+					}
+				]
+			}
+		},
+		{
+			"name": "Additional Test Cases",
+			"item": [
+				{
+					"name": "Create Multiple Employees",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Employee created successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('employee_id');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"{{$randomFirstName}}\",\n  \"last_name\": \"{{$randomLastName}}\",\n  \"email\": \"{{$randomEmail}}\",\n  \"position\": \"{{$randomJobTitle}}\",\n  \"salary\": {{$randomInt}},\n  \"date_of_joining\": \"2024-10-10T12:00:00.000Z\",\n  \"department\": \"{{$randomJobArea}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/emp/employees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees"
+							]
+						},
+						"description": "Create employee with random data. Run this multiple times to populate the database."
+					},
+					"response": []
+				},
+				{
+					"name": "Validation - Missing Required Fields",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Validation errors present\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('errors');",
+									"    pm.expect(jsonData.errors.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"Test\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/emp/employees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"emp",
+								"employees"
+							]
+						},
+						"description": "Test validation by omitting required fields."
+					},
+					"response": []
+				},
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"API is running\", function () {",
+									"    pm.response.to.have.body();",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								""
+							]
+						},
+						"description": "Check if the API server is running."
+					},
+					"response": []
+				}
+			],
+			"description": "Additional edge cases and validation tests"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "employee_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

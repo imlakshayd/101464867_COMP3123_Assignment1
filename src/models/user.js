@@ -27,11 +27,11 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Password is required'],
         minlength: [6, 'Password must be at least 6 characters long'] 
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    created_at: {
+    type: Date,
+    default: Date.now
     },
-    updatedAt: {
+    updated_at: {
         type: Date,
         default: Date.now
     }
@@ -39,20 +39,18 @@ const userSchema = new mongoose.Schema({
 
 // Middleware to update the updatedAt field before each save
 userSchema.pre('save', async function(next) {
-
-    // Only hash the password if it has been modified (or is new) to avoid re-hashing
     if (!this.isModified('password')) {
+        this.updated_at = Date.now();
         return next();
     }
 
-    // Hash the password before saving it to the database
     try {
-        const salt = await bcrypt.genSalt(10); // Generate a salt with 10 round - Salt is random data that is used as an additional input to a one-way function that "hashes" a password or passphrase.
-        this.password = await bcrypt.hash(this.password, salt); // Hash the password using the generated salt
-        this.updatedAt = Date.now(); // Update the updatedAt field to the current date
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        this.updated_at = Date.now();
         next();
     } catch (err) { 
-        next(err); // Pass any errors to the next middleware
+        next(err);
     }   
 });
 

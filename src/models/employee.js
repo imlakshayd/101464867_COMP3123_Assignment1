@@ -56,6 +56,7 @@ employeeSchema.pre('save',function(next){
     next();
 });
 
+
 employeeSchema.pre('findOneAndUpdate', function(next) {
     this.set({ updated_at: Date.now() });
     next();

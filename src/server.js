@@ -3,27 +3,33 @@ const express = require('express');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
+const { notFound, errorHandler } = require('./middleware/errorHandling');
+
 
 connectDB(); // Connect to the database
 
 const app = express();
 
-app.use(express.json()); // Middleware to parse JSON request bodies
+// Middleware to parse JSON request bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Root endpoint
 app.get('/', (req, res) => {
     res.send('API is running...');
 });
 
-// User routes - matching assignment requirements
+// API Routes
 app.use('/api/v1/user', userRoutes);
-
-// Employee routes - matching assignment requirements
 app.use('/api/v1/emp', employeeRoutes);
+
+// Error Handling Middleware (must be after routes)
+app.use(notFound);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`http://localhost:${PORT}`);
-}); 
+});
